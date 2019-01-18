@@ -2,8 +2,9 @@ project "ImGui"
     kind "StaticLib"
     language "C++"
 
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+    -- Make sure the variables bin_dir and bin_int_dir are set!
+    targetdir (bin_dir)
+    objdir (bin_int_dir)
 
     files
     {

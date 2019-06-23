@@ -1,6 +1,6 @@
 # imgui_freetype
 
-Build font atlases using FreeType instead of stb_truetype (which is the default font rasterizer in Dear ImGui).
+Build font atlases using FreeType instead of stb_truetype (the default imgui's font rasterizer).
 <br>by @vuhdo, @mikesart, @ocornut.
 
 ### Usage
@@ -22,7 +22,7 @@ io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 FreeType assumes blending in linear space rather than gamma space.
 See FreeType note for [FT_Render_Glyph](https://www.freetype.org/freetype2/docs/reference/ft2-base_interface.html#FT_Render_Glyph).
 For correct results you need to be using sRGB and convert to linear space in the pixel shader output.
-The default Dear ImGui styles will be impacted by this change (alpha values will need tweaking).
+The default imgui styles will be impacted by this change (alpha values will need tweaking).
 
 ### Test code Usage
 ```cpp
@@ -43,8 +43,7 @@ while (true)
    if (freetype_test.UpdateRebuild())
    {
       // REUPLOAD FONT TEXTURE TO GPU
-      ImGui_ImplXXX_DestroyDeviceObjects();
-      ImGui_ImplXXX_CreateDeviceObjects();
+      // e.g ImGui_ImplOpenGL3_DestroyDeviceObjects() + ImGui_ImplOpenGL3_CreateDeviceObjects()
    }
    ImGui::NewFrame();
    freetype_test.ShowFreetypeOptionsWindow();
@@ -68,7 +67,6 @@ struct FreeTypeTest
     FontBuildMode BuildMode;
     bool          WantRebuild;
     float         FontsMultiply;
-    int           FontsPadding;
     unsigned int  FontsFlags;
 
     FreeTypeTest()
@@ -76,7 +74,6 @@ struct FreeTypeTest
         BuildMode = FontBuildMode_FreeType;
         WantRebuild = true;
         FontsMultiply = 1.0f;
-        FontsPadding = 1;
         FontsFlags = 0;
     }
 
@@ -86,12 +83,10 @@ struct FreeTypeTest
         if (!WantRebuild)
             return false;
         ImGuiIO& io = ImGui::GetIO();
-        io.Fonts->TexGlyphPadding = FontsPadding;
-        for (int n = 0; n < io.Fonts->ConfigData.Size; n++)
+        for (int n = 0; n < io.Fonts->Fonts.Size; n++)
         {
-            ImFontConfig* font_config = (ImFontConfig*)&io.Fonts->ConfigData[n];
-            font_config->RasterizerMultiply = FontsMultiply;
-            font_config->RasterizerFlags = (BuildMode == FontBuildMode_FreeType) ? FontsFlags : 0x00;
+            io.Fonts->Fonts[n]->ConfigData->RasterizerMultiply = FontsMultiply;
+            io.Fonts->Fonts[n]->ConfigData->RasterizerFlags = (BuildMode == FontBuildMode_FreeType) ? FontsFlags : 0x00;
         }
         if (BuildMode == FontBuildMode_FreeType)
             ImGuiFreeType::BuildFontAtlas(io.Fonts, FontsFlags);
@@ -110,7 +105,6 @@ struct FreeTypeTest
         ImGui::SameLine();
         WantRebuild |= ImGui::RadioButton("Stb (Default)", (int*)&BuildMode, FontBuildMode_Stb);
         WantRebuild |= ImGui::DragFloat("Multiply", &FontsMultiply, 0.001f, 0.0f, 2.0f);
-        WantRebuild |= ImGui::DragInt("Padding", &FontsPadding, 0.1f, 0, 16);
         if (BuildMode == FontBuildMode_FreeType)
         {
             WantRebuild |= ImGui::CheckboxFlags("NoHinting",     &FontsFlags, ImGuiFreeType::NoHinting);
@@ -120,7 +114,6 @@ struct FreeTypeTest
             WantRebuild |= ImGui::CheckboxFlags("MonoHinting",   &FontsFlags, ImGuiFreeType::MonoHinting);
             WantRebuild |= ImGui::CheckboxFlags("Bold",          &FontsFlags, ImGuiFreeType::Bold);
             WantRebuild |= ImGui::CheckboxFlags("Oblique",       &FontsFlags, ImGuiFreeType::Oblique);
-            WantRebuild |= ImGui::CheckboxFlags("Monochrome",    &FontsFlags, ImGuiFreeType::Monochrome);
         }
         ImGui::End();
     }

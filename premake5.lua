@@ -19,11 +19,11 @@ project "ImGui"
         "imstb_truetype.h",
         "imgui_demo.cpp"
     }
-
+    
     filter "system:windows"
         systemversion "latest"
         cppdialect "C++17"
         staticruntime "On"
-
+        
     filter { "system:windows", "configurations:Release" }
         buildoptions "/MT"
